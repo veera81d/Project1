@@ -14,6 +14,7 @@ def home():
 input_d = {}
 @app.route("/", methods =['POST'])
 def inp():
+    #Testing
     if request.method == 'POST':
         input_d["Bedroom"] = request.form.get('bhk')
         input_d["bath"] = request.form.get('bath')
