@@ -7,6 +7,23 @@ app = Flask(__name__)
 with open("model_jl", "rb") as model:
     model_lr = joblib.load(model)
 
+def process(X):
+    df = pd.DataFrame([X])
+    df[['Bedroom', 'bath', 'balcony']] = df[['Bedroom', 'bath', 'balcony']].apply(pd.to_numeric)
+    df[['Area']] = df[['Area']].astype(float)
+    dummy = pd.get_dummies(df.Location)
+    dfin_final = pd.concat([df.drop(['Location'], axis=1), dummy], axis=1)
+    df_input = pd.DataFrame(columns=['bath', 'balcony', 'Bedroom', 'Area', '7th Phase JP Nagar',
+                                     'Bannerghatta Road', 'Electronic City', 'Electronic City Phase II',
+                                     'Haralur Road', 'Hebbal', 'Hennur Road', 'Kanakpura Road',
+                                     'Marathahalli', 'Raja Rajeshwari Nagar', 'Sarjapur  Road',
+                                     'Thanisandra', 'Uttarahalli', 'Whitefield', 'Yelahanka'])
+    for col in dfin_final:
+        df_input[col] = dfin_final[col]
+    df_final = df_input.fillna(0)
+    price = model_lr.predict(df_final)
+    return price
+
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -22,20 +39,7 @@ def inp():
         input_d["Area"] = request.form.get('area')
         input_d["Location"] = request.form.get('location')
         input_final = input_d
-    df = pd.DataFrame([input_final])
-    df[['Bedroom', 'bath', 'balcony']] = df[['Bedroom', 'bath', 'balcony']].apply(pd.to_numeric)
-    df[['Area']] = df[['Area']].astype(float)
-    dummy = pd.get_dummies(df.Location)
-    dfin_final = pd.concat([df.drop(['Location'], axis=1), dummy], axis=1)
-    df_input = pd.DataFrame(columns=['bath', 'balcony', 'Bedroom', 'Area', '7th Phase JP Nagar',
-                                     'Bannerghatta Road', 'Electronic City', 'Electronic City Phase II',
-                                     'Haralur Road', 'Hebbal', 'Hennur Road', 'Kanakpura Road',
-                                     'Marathahalli', 'Raja Rajeshwari Nagar', 'Sarjapur  Road',
-                                     'Thanisandra', 'Uttarahalli', 'Whitefield', 'Yelahanka'])
-    for col in dfin_final:
-        df_input[col] = dfin_final[col]
-    df_final = df_input.fillna(0)
-    price = model_lr.predict(df_final)
+    price = process(input_final)
     return render_template("home.html", values=input_final, results=price)
 
 
